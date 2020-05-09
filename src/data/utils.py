@@ -21,7 +21,7 @@ def decode_coco_json(json_path):
     """
     assert os.path.isfile(json_path), f'json not exist: {json_path}'
     img_ids, lbl_bbox = get_annotations(json_path)
-    img2bbox = dict(zip(imgs, lbl_bbox))
+    img2bbox = dict(zip(img_ids, lbl_bbox))
     return img_ids, lbl_bbox, img2bbox
 
     
