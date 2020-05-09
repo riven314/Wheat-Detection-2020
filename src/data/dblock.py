@@ -11,11 +11,12 @@ from fastai2.vision.all import RandomSplitter
 from fastai2.vision.all import Resize, Rotate, Flip, Dihedral, Normalize
 
 
-def build_dblock(data_path, resize_sz, rand_seed = 144):
+def build_dblock(data_path, resize_sz, norm, rand_seed = 144):
     json_path = data_path / 'train.json'
     _, _, img2bbox = decode_coco_json(json_path)
     
     blks = (ImageBlock, BBoxBlock, BBoxLblBlock)
+    
     get_ids_func = get_img_ids(json_path)
     getters_func = [lambda o: data_path / 'train' / o, 
                     lambda o: img2bbox[o][0], 
@@ -23,7 +24,9 @@ def build_dblock(data_path, resize_sz, rand_seed = 144):
     
     rand_splitter = RandomSplitter(valid_pct = 0.2, seed = rand_seed)
     item_tfms = [Resize(resize_sz)]
-    batch_tfms = [Rotate(), Flip(), Dihedral(), Normalize.from_stats(*imagenet_stats)]
+    batch_tfms = [Rotate(), Flip(), Dihedral()]
+    if norm: 
+        batch_tfms += [Normalize.from_stats(*imagenet_stats)]
     
     dblock = DataBlock(
         blocks = blks, splitter = rand_splitter,
