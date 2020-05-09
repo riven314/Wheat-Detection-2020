@@ -5,6 +5,10 @@ from numba import jit, prange
 from typing import List, Union, Tuple
 
 
+#from functools import partial
+#thresholds = [i for i in map(lambda i: i/100, range(50, 80, 5))]
+#mAP_getter = partial(calculate_image_precision, thresholds = thresholds)
+
 @jit(nopython=True)
 def calculate_iou(gt: List[Union[int, float]], 
                   pr: List[Union[int, float]], 

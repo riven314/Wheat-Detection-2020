@@ -18,3 +18,6 @@ def get_faster_rcnn():
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, cls_n)
     return model
     
+
+def split_faster_rcnn_params(m):
+    return L(m.backbone, m.rpn, m.roi_heads).map(params)
