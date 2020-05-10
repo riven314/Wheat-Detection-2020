@@ -16,11 +16,11 @@ from src.callback.learner import WheatLearner
 DATA_PATH = Path('/userhome/34/h3509807/wheat-data')
 SAVE_DIR = Path('models')
 RESIZE_SZ = 256
-TEST_MODE = True
+TEST_MODE = False
 BS = 16
 LR = 2e-4
-INIT_EPOCH = 4
-FT_EPOCH = 4
+INIT_EPOCH = 10
+FT_EPOCH = 20
 
 dls = build_dataloaders(DATA_PATH, BS, RESIZE_SZ, 
                         norm = False, rand_seed = 144, 
