@@ -3,6 +3,8 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.rpn import AnchorGenerator
 
+from fastai2.vision.all import L, params
+
 
 def get_faster_rcnn():
     """

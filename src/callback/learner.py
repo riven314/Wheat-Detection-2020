@@ -1,4 +1,4 @@
-from fastai2.vision.all import Learner
+from fastai2.vision.all import Learner, CancelBatchException
 
 
 class WheatLearner(Learner):
