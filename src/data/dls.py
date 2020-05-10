@@ -5,7 +5,10 @@ from pathlib import Path
 from src.data.dblock import build_dblock
 
 
-def build_dataloaders(data_path, bs, resize_sz = 256, norm = False, rand_seed = 144):
+def build_dataloaders(
+    data_path, bs, resize_sz = 256, 
+    norm = False, rand_seed = 144, test_mode = False
+):
     """
     :param:
         data_path : str/ Path, path to wheat datasets
@@ -15,8 +18,8 @@ def build_dataloaders(data_path, bs, resize_sz = 256, norm = False, rand_seed = 
     if isinstance(data_path, str):
         data_path = Path(data_path)
         
-    dblk = build_dblock(data_path, resize_sz, 
-                        norm = norm, rand_seed = rand_seed)
+    dblk = build_dblock(data_path, resize_sz, norm = norm, 
+                        rand_seed = rand_seed, test_mode = test_mode)
     dls = dblk.dataloaders(data_path / 'train', bs = bs)
     dls.c = 2
     return dls

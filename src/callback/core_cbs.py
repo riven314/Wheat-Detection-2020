@@ -1,4 +1,4 @@
-class EssentialCallback(Callback):
+class FasterRCNNCallback(Callback):
     """ 
     essential changes for fastai2 Learner to interface with torchvision FasterRCNN 
     """
