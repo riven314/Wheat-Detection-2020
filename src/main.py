@@ -17,13 +17,17 @@ DATA_PATH = Path('/userhome/34/h3509807/wheat-data')
 SAVE_DIR = Path('models')
 RESIZE_SZ = 256
 TEST_MODE = False
+RAND_SEED = 144
+
 BS = 16
-LR = 2e-4
+INIT_LR = 2e-4
+FT_LR = slice(2e-6, 1e-4)
 INIT_EPOCH = 10
 FT_EPOCH = 20
 
+
 dls = build_dataloaders(DATA_PATH, BS, RESIZE_SZ, 
-                        norm = False, rand_seed = 144, 
+                        norm = False, rand_seed = RAND_SEED, 
                         test_mode = TEST_MODE)
 model = get_faster_rcnn()
 multi_loss = WeightedMultiLoss()
@@ -36,9 +40,9 @@ learn = WheatLearner(dls, model, loss_func = multi_loss,
                      #metrics = map_getter,
 
 learn.freeze()
-learn.fit_one_cycle(INIT_EPOCH, LR)
-learn.freeze_to(-2)
-learn.fit_one_cycle(FT_EPOCH, LR / 10)
+learn.fit_one_cycle(INIT_EPOCH, INIT_LR)
+learn.unfreeze()
+learn.fit_one_cycle(FT_EPOCH, FT_LR)
 
 model_path = SAVE_DIR / 'final_model.pth'
 learn.save('final_learner')

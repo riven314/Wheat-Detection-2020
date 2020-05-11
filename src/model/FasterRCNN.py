@@ -1,3 +1,4 @@
+import torch.nn as nn
 import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection import FasterRCNN
@@ -22,4 +23,4 @@ def get_faster_rcnn():
     
 
 def split_faster_rcnn_params(m):
-    return L(m.backbone, m.rpn, m.roi_heads).map(params)
+    return L(m.backbone, nn.Sequential(m.rpn, m.roi_heads)).map(params)
