@@ -184,9 +184,7 @@ def calculate_image_precision(gts: List[List[Union[int, float]]],
     return image_precision
 
 
-def calculate_batch_precision(b_preds: dict, b_gts: dict, 
-                              thresholds: Union[List, Tuple] = (0.5, ),
-                              form: str = 'coco') -> float:
+def mAP(b_preds: dict, b_gts: dict, thresholds: Union[List, Tuple], form: str = 'coco') -> float:
     ps = []                              
     for dict_preds, dict_gts in zip(b_preds, b_gts):
         # (BS, 4): [x0, y0, x1, y1], sorted by score (desc)
