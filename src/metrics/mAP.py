@@ -1,3 +1,10 @@
+"""
+credit:
+- Competition metric details + script: https://www.kaggle.com/pestipeti/competition-metric-details-script?scriptVersionId=33780809
+"""
+import os
+from pdb import set_trace
+
 import numpy as np
 import numba
 from numba import jit, prange
@@ -176,6 +183,18 @@ def calculate_image_precision(gts: List[List[Union[int, float]]],
 
     return image_precision
 
+
+def calculate_batch_precision(b_preds: dict, b_gts: dict, 
+                              thresholds: Union[List, Tuple] = (0.5, ),
+                              form: str = 'coco') -> float:
+    ps = []                              
+    for dict_preds, dict_gts in zip(b_preds, b_gts):
+        # (BS, 4): [x0, y0, x1, y1], sorted by score (desc)
+        preds = dict_preds['boxes'].cpu().numpy() 
+        gts = dict_gts['boxes'].cpu().numpy()
+        p = calculate_image_precision(gts, preds, thresholds, form)
+        ps.append(p)
+    return sum(ps) / len(ps)
 
 #thresholds = numba.typed.List()
 #for x in [0.5, 0.55, 0.6, 0.65, 0.7, 0.75]:

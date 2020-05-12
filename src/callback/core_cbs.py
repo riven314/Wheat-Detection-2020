@@ -4,7 +4,8 @@ import torch
 
 from fastai2.vision.all import patch, tensor
 from fastai2.vision.all import TensorPoint
-from fastai2.vision.all import Callback, TrainEvalCallback
+from fastai2.vision.all import AvgMetric
+from fastai2.vision.all import Callback, TrainEvalCallback, Recorder
 
 
 class FasterRCNNCallback(Callback):
@@ -69,3 +70,30 @@ def begin_validate(self: TrainEvalCallback):
         #self.model.eval()
         #print('begin validate, eval mode disabled!!!')
         self.learn.training = False
+        
+
+@patch
+def after_batch(self: Recorder):
+    """ 
+    only enable model.eval mode on AvgMetric (i.e. mAP) calculation 
+    this is a bad fix, assuming:
+    1. AvgMetric is eval later than AvgLoss
+    2. after Recorder callback, the rest of callback don't use self.learn.pred again
+    """
+    if len(self.yb) == 0: return
+    mets = self._train_mets if self.training else self._valid_mets
+    
+    for met in mets: 
+        if isinstance(met, AvgMetric):
+            # overwrite self.learn.pre
+            self.model.eval()
+            self.learn.pred = self.model(*self.learn.xb)
+        else:
+            self.model.train()
+        met.accumulate(self.learn)
+    self.model.train()
+    
+    if not self.training: return
+    self.lrs.append(self.opt.hypers[-1]['lr'])
+    self.losses.append(self.smooth_loss.value)
+    self.learn.smooth_loss = self.smooth_loss.value
