@@ -64,13 +64,13 @@ class CheckpointCallback(Callback):
             print(f'latest checkpoints saved: {self.epoch}')
                 
         
-@patch
-def begin_validate(self: TrainEvalCallback):
-        "Set the model in validation mode"
-        print('monkey patched TrainEvalCallback.begin_validate')
-        #self.model.eval()
-        #print('begin validate, eval mode disabled!!!')
-        self.learn.training = False
+#@patch
+#def begin_validate(self: TrainEvalCallback):
+#        "Set the model in validation mode"
+#        print('monkey patched TrainEvalCallback.begin_validate')
+#        #self.model.eval()
+#        #print('begin validate, eval mode disabled!!!')
+#        self.learn.training = False
         
 
 @patch
