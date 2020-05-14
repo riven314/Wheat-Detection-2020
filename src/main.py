@@ -1,3 +1,4 @@
+""" implement main training loop """
 import os
 from functools import partial
 from pathlib import Path
@@ -11,8 +12,7 @@ from src.model.FasterRCNN import get_faster_rcnn, split_faster_rcnn_params
 from src.metrics.loss import WeightedMultiLoss
 from src.metrics.mAP import mAP
 from src.callback.core_cbs import FasterRCNNCallback, CheckpointCallback
-#from src.callback.core_cbs import begin_validate
-from src.callback.core_cbs import after_batch
+from src.callback.core_cbs import after_batch, begin_validate
 from src.callback.learner import WheatLearner
 
 
