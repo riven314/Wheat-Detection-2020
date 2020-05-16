@@ -20,15 +20,15 @@ DATA_PATH = Path('/userhome/34/h3509807/wheat-data')
 SAVE_DIR = Path('models')
 RESIZE_SZ = 256
 TEST_MODE = False
-RAND_SEED = 144
+RAND_SEED = None
 
-BS = 16 # 16 backbone fine-tune OOM
+BS = 8 # 16 backbone fine-tune OOM
 INIT_LR = 2e-4
-INIT_EPOCH = 30
+INIT_EPOCH = 20
 
 IS_FT = True
 FT_LR = slice(2e-6, 1e-4)
-FT_EPOCH = 30
+FT_EPOCH = 20
 
 get_dls = partial(build_dataloaders, data_path = DATA_PATH, 
                   resize_sz = RESIZE_SZ, norm = False, 
