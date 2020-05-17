@@ -12,6 +12,7 @@ from fastai2.vision.all import Resize, Rotate, Flip, Dihedral, Normalize, Bright
 
 
 def build_dblock(data_path, resize_sz, norm, rand_seed = 144, test_mode = False):
+    """ after batch transforms, bbox expressed in normalized [x0, y0, x1, y1] """
     json_path = data_path / 'train_mini.json' if test_mode else data_path / 'train.json'
     _, _, img2bbox = decode_coco_json(json_path)
     
