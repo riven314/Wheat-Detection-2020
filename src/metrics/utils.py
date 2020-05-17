@@ -1,7 +1,14 @@
 import math
 
+import numpy as np
+
 import torch
 from torch import nn, LongTensor, FloatTensor
+
+
+def decode_bboxs(enc_bboxs, img_size):
+    """ enc_bboxs is np.array """
+    return (enc_bboxs + 1) * img_size / 2
 
 
 def activ_to_bbox(acts, anchors, flatten = True):
