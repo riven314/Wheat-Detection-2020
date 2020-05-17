@@ -8,9 +8,7 @@ from fastai2.vision.all import DataBlock
 from fastai2.vision.all import imagenet_stats
 from fastai2.vision.all import ImageBlock, BBoxBlock, BBoxLblBlock
 from fastai2.vision.all import RandomSplitter
-#from fastai2.vision.all import aug_transforms
 from fastai2.vision.all import Resize, Rotate, Flip, Dihedral, Normalize, Brightness, Contrast
-#from fastai2.vision.all import TensorBBox, PointScaler, TransformBlock, bb_pad
 
 
 def build_dblock(data_path, resize_sz, norm, rand_seed = 144, test_mode = False):
@@ -18,9 +16,6 @@ def build_dblock(data_path, resize_sz, norm, rand_seed = 144, test_mode = False)
     _, _, img2bbox = decode_coco_json(json_path)
     
     blks = (ImageBlock, BBoxBlock, BBoxLblBlock)
-    #tensorbbox_create = partial(TensorBBox.create, img_size = resize_sz)
-    #NewBBoxBlock = TransformBlock(type_tfms = tensorbbox_create, item_tfms = PointScaler, dls_kwargs = {'before_batch': bb_pad})
-    #blks = (ImageBlock, NewBBoxBlock, BBoxLblBlock)
     
     get_ids_func = get_img_ids(json_path)
     getters_func = [lambda o: data_path / 'train' / o, 
@@ -29,10 +24,7 @@ def build_dblock(data_path, resize_sz, norm, rand_seed = 144, test_mode = False)
     
     rand_splitter = RandomSplitter(valid_pct = 0.2, seed = rand_seed)
     item_tfms = [Resize(resize_sz)]
-    
-    p = 0.5
-    #batch_tfms = aug_transforms(size = resize_sz, min_scale = 0.85, do_flip = True)
-    batch_tfms = [Rotate(p = p), Flip(p = p), Dihedral(p = p), 
+    batch_tfms = [Rotate(), Flip(), Dihedral(), # default p = 0.5
                   Brightness(max_lighting = 0.2, p = 0.75), 
                   Contrast(max_lighting = 0.2, p = 0.75)]
     if norm: 

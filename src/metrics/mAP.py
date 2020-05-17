@@ -5,6 +5,7 @@ credit:
 import os
 from pdb import set_trace
 
+import torch
 import numpy as np
 import numba
 from numba import jit, prange
@@ -15,6 +16,41 @@ from typing import List, Union, Tuple
 #from functools import partial
 #thresholds = [i for i in map(lambda i: i/100, range(50, 80, 5))]
 #mAP_getter = partial(calculate_image_precision, thresholds = thresholds)
+
+
+def mAP(b_preds, b_bboxs_gts, b_clas_gts, 
+        thresholds: Union[List, Tuple], 
+        detection_thre = 0.5,
+        form: str = 'coco') -> float:
+    """ ** assume b_preds are filtered by detection_threshold! """
+    b_clas_preds, b_bboxs_preds, sizes = b_preds
+    b_iter = zip(b_clas_preds, b_bboxs_preds, b_clas_gts, b_bboxs_gts)
+    
+    b_mets = []
+    for clas_preds, bbox_preds, clas_gts, bbox_gts in b_iter:
+        clas_preds = clas_preds.cpu().numpy().squeeze()
+        bbox_preds = bbox_preds.cpu().numpy()
+        clas_gts = clas_gts.cpu().numpy()
+        bbox_gts = bbox_gts.cpu().numpy()
+        
+        set_trace()
+        # filter out trivial ground truth
+        
+        
+        # filter out preds below detection threshold and sort by confidence
+        preds_idxs = np.argwhere(clas_preds >= detection_thre).squeeze()
+        clas_preds = clas_preds[preds_idxs]
+        bbox_preds = bbox_preds[preds_idxs]
+        #sort_idxs = 
+        
+        # restore predicted bbox [x, y, w, h]
+        
+        
+        met = calculate_image_precision(gts, preds, thresholds, form)
+        b_mets.append(met)
+        
+    return sum(b_mets) / len(b_mets)
+
 
 @jit(nopython=True)
 def calculate_iou(gt: List[Union[int, float]], 
@@ -183,16 +219,6 @@ def calculate_image_precision(gts: List[List[Union[int, float]]],
 
     return image_precision
 
-
-def mAP(b_preds: dict, b_gts: dict, thresholds: Union[List, Tuple], form: str = 'coco') -> float:
-    ps = []                              
-    for dict_preds, dict_gts in zip(b_preds, b_gts):
-        # (BS, 4): [x0, y0, x1, y1], sorted by score (desc)
-        preds = dict_preds['boxes'].cpu().numpy() 
-        gts = dict_gts['boxes'].cpu().numpy()
-        p = calculate_image_precision(gts, preds, thresholds, form)
-        ps.append(p)
-    return sum(ps) / len(ps)
 
 #thresholds = numba.typed.List()
 #for x in [0.5, 0.55, 0.6, 0.65, 0.7, 0.75]:
