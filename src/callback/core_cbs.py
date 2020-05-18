@@ -3,6 +3,7 @@ from pathlib import Path
 import torch
 
 from fastai2.vision.all import AvgMetric
+from fastai2.vision.all import Callback
 
 
 class RetinaNetCallback(Callback):
