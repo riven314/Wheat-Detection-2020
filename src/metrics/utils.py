@@ -7,7 +7,9 @@ from torch import nn, LongTensor, FloatTensor
 
 
 def decode_bboxs(enc_bboxs, img_size):
-    """ enc_bboxs is np.array """
+    """ 
+    decode enc_bboxs from normalized [-1, +1] to orig img scale
+    """
     return (enc_bboxs + 1) * img_size / 2
 
 
@@ -107,4 +109,26 @@ def IoU_values(anchs, targs):
     inter = intersection(anchs, targs)
     anc_sz, tgt_sz = anchs[:,2] * anchs[:,3], targs[:,2] * targs[:,3]
     union = anc_sz.unsqueeze(1) + tgt_sz.unsqueeze(0) - inter
-    return inter/(union+1e-8)
+    return inter/(union + 1e-8)
+
+
+def process_output(output, i, detect_thresh = 0.5):
+    """ 
+    Process `output[i]` and return the predicted bboxes above `detect_thresh`.
+    
+    :return:
+        bbox_pred : bbox in normalized cthw format
+        scores : confidence score after filtering
+        preds : class index for a predicted bbox
+    """
+    clas_pred, bbox_pred, sizes = output[0][i], output[1][i], output[2]
+    anchors = create_anchors(sizes, ratios, scales).to(clas_pred.device)
+    bbox_pred = activ_to_bbox(bbox_pred, anchors)
+    clas_pred = torch.sigmoid(clas_pred)
+    # argmax --> sigmoid(.) --> apply threshold
+    detect_mask = clas_pred.max(1)[0] > detect_thresh
+    bbox_pred, clas_pred = bbox_pred[detect_mask], clas_pred[detect_mask]
+    # still expressed in cthw 
+    bbox_pred = tlbr2cthw(torch.clamp(cthw2tlbr(bbox_pred), min=-1, max=1))    
+    scores, preds = clas_pred.max(1)
+    return bbox_pred, scores, preds
