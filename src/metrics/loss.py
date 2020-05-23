@@ -1,3 +1,6 @@
+import os
+from pdb import set_trace
+
 import torch
 import torch.nn.functional as F
 
@@ -28,12 +31,17 @@ class RetinaNetFocalLoss(nn.Module):
     
     def _create_anchors(self, sizes, device:torch.device):
         """
+        output sizes of feature maps from FPN 
         e.g. sizes = [[28, 28], [56, 56], [7, 7], [4, 4], [2, 2]]
         """
         self.sizes = sizes
         self.anchors = create_anchors(sizes, self.ratios, self.scales).to(device)
     
     def _unpad(self, bbox_tgt, clas_tgt):
+        """
+        1. decrement clas_tgt by 1 (e.g. cls 1 --> cls 0, dummy class = 0)
+        2. change bbox format from tlbr to cthw
+        """
         i = torch.min(torch.nonzero(clas_tgt-self.pad_idx))
         return tlbr2cthw(bbox_tgt[i:]), clas_tgt[i:]-1+self.pad_idx
     
@@ -41,30 +49,42 @@ class RetinaNetFocalLoss(nn.Module):
         encoded_tgt = encode_class(clas_tgt, clas_pred.size(1))
         ps = torch.sigmoid(clas_pred.detach())
         weights = encoded_tgt * (1 - ps) + (1 - encoded_tgt) * ps
-        alphas = (1-encoded_tgt) * self.alpha + encoded_tgt * (1-self.alpha)
+        alphas = (1 - encoded_tgt) * self.alpha + encoded_tgt * (1 - self.alpha)
         weights.pow_(self.gamma).mul_(alphas)
         clas_loss = F.binary_cross_entropy_with_logits(clas_pred, encoded_tgt, 
                                                        weights, reduction = 'sum')
         return clas_loss
         
     def _one_loss(self, clas_pred, bbox_pred, clas_tgt, bbox_tgt):
+        # from tlbr to cthw, decrement clas_idx by 1, -1 = padding
         bbox_tgt, clas_tgt = self._unpad(bbox_tgt, clas_tgt)
+        # self.anchors in size (# anchors, 4)
         matches = match_anchors(self.anchors, bbox_tgt)
         bbox_mask = matches>=0
+        
         if bbox_mask.sum() != 0:
             bbox_pred = bbox_pred[bbox_mask]
             bbox_tgt = bbox_tgt[matches[bbox_mask]]
             bb_loss = self.reg_loss(bbox_pred, bbox_to_activ(bbox_tgt, self.anchors[bbox_mask]))
         else: bb_loss = 0.
         matches.add_(1)
+        # increment class_tgt by 1, 0 = padding
         clas_tgt = clas_tgt + 1
         clas_mask = matches >= 0
         clas_pred = clas_pred[clas_mask]
         clas_tgt = torch.cat([clas_tgt.new_zeros(1).long(), clas_tgt])
+        
+        # expand clas_tgt dim ~ # maching anchors 
         clas_tgt = clas_tgt[matches[clas_mask]]
         return bb_loss + self._focal_loss(clas_pred, clas_tgt)/torch.clamp(bbox_mask.sum(), min=1.)
     
     def forward(self, output, bbox_tgts, clas_tgts):
+        """
+        :param:
+            bbox_tgts : (B, # bbox with pad, 4), expect in tlbr format
+            output : (clas_preds, bbox_preds, sizes)
+            clas_tgts : class labels (B, # labels with pad), dummy padding idx = 0
+        """
         clas_preds, bbox_preds, sizes = output
         if self._change_anchors(sizes): self._create_anchors(sizes, clas_preds.device)
         n_classes = clas_preds.size(2)
@@ -73,6 +93,10 @@ class RetinaNetFocalLoss(nn.Module):
 
     
 class SigmaL1SmoothLoss(nn.Module):
+    """
+    in low deviation, apply L2 loss (lower penalty than L1)
+    in high deviation, apply L1 loss
+    """
     def forward(self, pred, targ):
         reg_diff = torch.abs(targ - pred)
         reg_loss = torch.where(torch.le(reg_diff, 1/9), 

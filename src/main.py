@@ -19,14 +19,14 @@ from src.callback.core_cbs import CheckpointCallback
 DATA_PATH = Path('/userhome/34/h3509807/wheat-data')
 SAVE_DIR = Path('models')
 RESIZE_SZ = 256
-TEST_MODE = False
+TEST_MODE = True
 RAND_SEED = None
 
 BS = 32
 INIT_LR = 1e-4
 INIT_EPOCH = 20
 
-IS_FT = True
+IS_FT = False
 FT_LR = slice(2e-7, 5e-5)
 FT_EPOCH = 20
 
