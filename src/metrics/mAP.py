@@ -1,234 +1,81 @@
-"""
-credit:
-- Competition metric details + script: https://www.kaggle.com/pestipeti/competition-metric-details-script?scriptVersionId=33780809
-"""
-import os
-from pdb import set_trace
-
 import torch
-import numpy as np
-import numba
-from numba import jit, prange
+import torch.nn as nn
 
-from typing import List, Union, Tuple
-
-from src.metrics.utils import decode_bboxs
-
-#from functools import partial
-#thresholds = [i for i in map(lambda i: i/100, range(50, 80, 5))]
-#mAP_getter = partial(calculate_image_precision, thresholds = thresholds)
+from src.metrics.utils import nms, process_output, cthw2tlbr, decode_bboxs
+from src.metrics.mAP_utils import calculate_image_precision
 
 
-def mAP(b_preds, b_bboxs_gts, b_clas_gts, 
-        thresholds: Union[List, Tuple], 
-        detection_thre = 0.5, img_sz = 256,
-        form: str = 'pascal_voc') -> float:
-    """
-    bboxs_gts expressed as normalized [x0, y0, x1, y1]
-    ** assume b_preds are filtered by detection_threshold! 
-    """
-    b_clas_preds, b_bboxs_preds, sizes = b_preds
-    b_iter = zip(b_clas_preds, b_bboxs_preds, b_clas_gts, b_bboxs_gts)
-    
-    b_mets = []
-    for clas_preds, bboxs_preds, clas_gts, bboxs_gts in b_iter:
-        clas_preds = clas_preds.cpu().numpy().squeeze()
-        bboxs_preds = decode_bboxs(bboxs_preds.cpu().numpy(), img_sz)
-        clas_gts = clas_gts.cpu().numpy()
-        bboxs_gts = decode_bboxs(bboxs_gts.cpu().numpy(), img_sz)
+class mAP(nn.Module):
+    def __init__(self, img_sz, iou_thresholds = None, 
+                 detect_threshold = 0.5, nms_threshold = 0.3):
+        """
+        :param:
+            img_sz : image size (for rescale image back from [-1, +1])
+            iou_thresholds : list of IoU thresholds for taking bbox pred as a match with gt
+            detect_threshold : float, a threshold on pred scores (sigmoid)
+            nms_threshold : float, threshold for applying Non-max Suppression
+        """
+        self.img_sz = img_sz
+        if iou_thresolds is None:
+            iou_thresholds = [i for i in map(lambda i: i/100, range(50, 80, 5))]
+        self.iou_thresholds = iou_thresholds
+        self.detect_threshold = detect_threshold
+        self.nms_threshold = nms_threshold
         
-        # filter out trivial ground truth
+    def clean_bboxs_pred(self, preds, i):
+        """
+        1. change pred bbox from offset format to cthw format
+        2. apply NMS to filter out highly overlapping pred bbox
+        3. change filtered pred bbox from cthw to tlbr
+        4. change from tlbr format to ltrb format (i.e. [x0, y0, x1, y1])
+        5. rescale bbox format from [-1, +1] to image size
+        
+        :param:
+            preds : tuple, batch-wise model predictions
+            i : index for which batch you wanna take
+        """
+        cthw_bboxs_pred, scores, clas_pred = process_output(preds, i, self.detect_threshold)
+        keep_idxs = nms(cthw_bboxs_pred, scores, self.nms_threshold)
+        cthw_bboxs_pred, scores, clas_pred = cthw_bboxs_pred[keep_idxs], scores[keep_idxs], clas_pred[keep_idxs]
+        tlbr_bboxs_pred = cthw2tlbr(cthw_bboxs_pred)
+        sort_idxs = torch.argsort(scores, dim = -1, descending = True)
+        tlbr_bboxs_pred, scores, clas_pred = tlbr_bboxs_pred[sort_idxs], scores[sort_idxs], clas_pred[sort_idxs]
+        bboxs_pred = tlbr_bboxs_pred[:, [1, 0, 3, 2]]
+        bboxs_pred = bboxs_pred.detach().cpu().numpy()
+        bboxs_pred = decode_bboxs(bboxs_pred, img_size = self.img_sz)
+        return bboxs_pred
+        
+    def clean_bboxs_gt(self, bboxs_gt, clas_gt):
+        """
+        1. remove bboxs, class labels with padding
+        2. rescale bbox format from [-1, +1] to image size
+        
+        :param:
+            bboxs_gt : tensor, one-sample target bboxes
+            clas_gt : tensor, one-sample target class labels
+        """
+        keep_idxs = torch.nonzero(clas_gt)
+        o_bboxs_gt = bboxs_gt[keep_idxs].squeeze().detach().cpu().numpy()
+        o_bboxs_gt = decode_bboxs(o_bboxs_gt, self.img_sz)
+        return o_bboxs_gt
         
         
-        # filter out preds below detection threshold
-        preds_idxs = np.argwhere(clas_preds >= detection_thre).squeeze()
-        clas_preds = clas_preds[preds_idxs]
-        bbox_preds = bbox_preds[preds_idxs]
-        
-        # sort preds by descending confidence
-        sort_idxs = np.argsort(-clas_preds)
-        clas_preds = clas_preds[sort_idxs]
-        bbox_preds = bbox_preds[sort_idxs]
-        
-        # restore predicted bbox [x, y, w, h]
-        
-        
-        met = calculate_image_precision(gts, preds, thresholds, form)
-        b_mets.append(met)
-        
-    return sum(b_mets) / len(b_mets)
-
-
-@jit(nopython=True)
-def calculate_iou(gt: List[Union[int, float]], 
-                  pr: List[Union[int, float]], 
-                  form='pascal_voc') -> float:
-    """Calculates the Intersection over Union.
-
-    Args:
-        gt: (List[Union[int, float]]) coordinates of the ground-truth box
-        pr: (List[Union[int, float]]) coordinates of the prdected box
-        form: (str) gt/pred coordinates format
-            - pascal_voc: [xmin, ymin, xmax, ymax]
-            - coco: [xmin, ymin, w, h]
-    Returns:
-        (float) Intersection over union (0.0 <= iou <= 1.0)
-    """
-    if form == 'coco':
-        gt = gt.copy()
-        pr = pr.copy()
-
-        gt[2] = gt[0] + gt[2]
-        gt[3] = gt[1] + gt[3]
-        pr[2] = pr[0] + pr[2]
-        pr[3] = pr[1] + pr[3]
-
-    # Calculate overlap area
-    dx = min(gt[2], pr[2]) - max(gt[0], pr[0])
-    dy = min(gt[3], pr[3]) - max(gt[1], pr[1])
-
-    if (dx <= 0) or (dy <= 0):
-        return 0.0
-    else:
-        overlap_area = dx * dy
-
-    # Calculate union area
-    union_area = (
-            (gt[2] - gt[0]) * (gt[3] - gt[1]) +
-            (pr[2] - pr[0]) * (pr[3] - pr[1]) -
-            overlap_area
-    )
-
-    return overlap_area / union_area
-
-
-@jit(nopython=True)
-def find_best_match(gts: List[List[Union[int, float]]],
-                    pred: List[Union[int, float]],
-                    threshold: float = 0.5,
-                    form: str = 'pascal_voc') -> int:
-    """Returns the index of the 'best match' between the
-    ground-truth boxes and the prediction. The 'best match'
-    is the highest IoU. (0.0 IoUs are ignored).
-
-    Args:
-        gts: (List[List[Union[int, float]]]) Coordinates of the available ground-truth boxes
-        pred: (List[Union[int, float]]) Coordinates of the predicted box
-        threshold: (float) Threshold
-        form: (str) Format of the coordinates
-
-    Return:
-        (int) Index of the best match GT box (-1 if no match above threshold)
-    """
-    best_match_iou = -np.inf
-    best_match_idx = -1
-
-    # for gt_idx, ggt in enumerate(gts):
-    for gt_idx in range(len(gts)):
-        iou = calculate_iou(gts[gt_idx], pred, form=form)
-
-        if iou < threshold:
-            continue
-
-        if iou > best_match_iou:
-            best_match_iou = iou
-            best_match_idx = gt_idx
-
-    return best_match_idx
-
-
-@jit(nopython=True)
-def np_delete_workaround(arr: np.ndarray, idx: int):
-    """Deletes element by index from a ndarray.
-
-    Numba does not handle np.delete, so this workaround
-    needed for the fast MAP calculation.
-
-    Args:
-        arr: (np.ndarray) numpy array
-        idx: (int) index of the element to remove
-
-    Returns:
-        (np.ndarray) New array
-    """
-    mask = np.zeros(arr.shape[0], dtype=np.int64) == 0
-    mask[idx] = False
-
-    return arr[mask]
-
-
-@jit(nopython=True)
-def calculate_precision(gts: List[List[Union[int, float]]],
-                        preds: List[List[Union[int, float]]],
-                        threshold: float = 0.5,
-                        form: str = 'coco') -> float:
-    """Calculates precision for GT - prediction pairs at one threshold.
-
-    Args:
-        gts: (List[List[Union[int, float]]]) Coordinates of the available ground-truth boxes
-        preds: (List[List[Union[int, float]]]) Coordinates of the predicted boxes,
-               sorted by confidence value (descending)
-        threshold: (float) Threshold
-        form: (str) Format of the coordinates
-
-    Return:
-        (float) Precision
-    """
-    n = len(preds)
-    tp = 0
-    fp = 0
-
-    # for pred_idx, pred in enumerate(preds_sorted):
-    for pred_idx in range(n):
-
-        best_match_gt_idx = find_best_match(gts, preds[pred_idx], threshold=threshold, form=form)
-
-        if best_match_gt_idx >= 0:
-            # True positive: The predicted box matches a gt box with an IoU above the threshold.
-            tp += 1
-            # Remove the matched GT box
-            gts = np_delete_workaround(gts, best_match_gt_idx)
-
-        else:
-            # No match
-            # False positive: indicates a predicted box had no associated gt box.
-            fp += 1
-
-    # False negative: indicates a gt box had no associated predicted box.
-    fn = len(gts)
-
-    return tp / (tp + fp + fn)
-
-
-@jit(nopython=True)
-def calculate_image_precision(gts: List[List[Union[int, float]]],
-                              preds: List[List[Union[int, float]]],
-                              thresholds: Union[List, Tuple] = (0.5, ),
-                              form: str = 'pascal_voc') -> float:
-    """Calculates image precision.
-
-    Args:
-        gts: (List[List[Union[int, float]]]) Coordinates of the available ground-truth boxes
-        preds: (List[List[Union[int, float]]]) Coordinates of the predicted boxes,
-               sorted by confidence value (descending)
-        thresholds: (float) Different thresholds
-        form: (str) Format of the coordinates
-
-    Return:
-        (float) Precision
-    """
-    n_threshold = len(thresholds)
-    image_precision = 0.0
-
-    for threshold in thresholds:
-        precision_at_threshold = calculate_precision(gts, preds, 
-                                                     threshold = threshold, 
-                                                     form = form)
-        image_precision += precision_at_threshold / n_threshold
-
-    return image_precision
-
-
-#thresholds = numba.typed.List()
-#for x in [0.5, 0.55, 0.6, 0.65, 0.7, 0.75]:
-#    thresholds.append(x)
+    def forward(self, preds, bboxs_gts, clas_gts):
+        """
+        :param:
+            preds : tuple, batch-wise model predictions
+            bbox_gts : tensor, batch-wise target bboxes
+            clas_gts : tensor, batch-wise target class labels
+        """
+        mAPs = []
+        bn = bboxs_gts.size(0)
+        for bi in range(bn):
+            bboxs_pred = self.clean_bboxs_pred(preds, bi)
+            bboxs_gt, clas_gt = bboxs_gts[bi], clas_gts[bi]
+            bboxs_gt = self.clean_bboxs_gt(bboxs_gt, clas_gt)
+            mAP = calculate_image_precision(bboxs_gt, bboxs_pred, 
+                                            thresholds = self.thresholds,
+                                            form = 'pascal_voc')
+            mAPs.append(mAP)
+        metrics = sum(mAPs) / len(mAPs)
+        return metrics

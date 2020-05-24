@@ -78,6 +78,15 @@ class RetinaNetFocalLoss(nn.Module):
         clas_tgt = clas_tgt[matches[clas_mask]]
         return bb_loss + self._focal_loss(clas_pred, clas_tgt)/torch.clamp(bbox_mask.sum(), min=1.)
     
+    def ltrb2tlbr(self, bbox_tgts):
+        """ 
+        bboxs format from [x0, y0, x1, y1] --> [y0, x0, y1, x1] 
+        
+        :param:
+            bbox_tgts : (B, MAX BBOX #, 4)
+        """
+        return bbox_tgts[:, :, [1, 0, 3, 2]]
+    
     def forward(self, output, bbox_tgts, clas_tgts):
         """
         :param:
@@ -86,10 +95,16 @@ class RetinaNetFocalLoss(nn.Module):
             clas_tgts : class labels (B, # labels with pad), dummy padding idx = 0
         """
         clas_preds, bbox_preds, sizes = output
-        if self._change_anchors(sizes): self._create_anchors(sizes, clas_preds.device)
+        # bbox_tgts orig format not align with expected
+        tlbr_bbox_tgts = self.ltrb2tlbr(bbox_tgts)
+        
+        if self._change_anchors(sizes): 
+            self._create_anchors(sizes, clas_preds.device)
         n_classes = clas_preds.size(2)
-        return sum([self._one_loss(cp, bp, ct, bt)
-                    for (cp, bp, ct, bt) in zip(clas_preds, bbox_preds, clas_tgts, bbox_tgts)])/clas_tgts.size(0)
+        b_loss = sum([self._one_loss(cp, bp, ct, bt)
+                      for (cp, bp, ct, bt) 
+                      in zip(clas_preds, bbox_preds, clas_tgts, tlbr_bbox_tgts)])
+        return b_loss /clas_tgts.size(0)
 
     
 class SigmaL1SmoothLoss(nn.Module):
