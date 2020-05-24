@@ -19,46 +19,6 @@ from src.metrics.utils import decode_bboxs
 #mAP_getter = partial(calculate_image_precision, thresholds = thresholds)
 
 
-def mAP(b_preds, b_bboxs_gts, b_clas_gts, 
-        thresholds: Union[List, Tuple], 
-        detection_thre = 0.5, img_sz = 256,
-        form: str = 'pascal_voc') -> float:
-    """
-    bboxs_gts expressed as normalized [x0, y0, x1, y1]
-    ** assume b_preds are filtered by detection_threshold! 
-    """
-    b_clas_preds, b_bboxs_preds, sizes = b_preds
-    b_iter = zip(b_clas_preds, b_bboxs_preds, b_clas_gts, b_bboxs_gts)
-    
-    b_mets = []
-    for clas_preds, bboxs_preds, clas_gts, bboxs_gts in b_iter:
-        clas_preds = clas_preds.cpu().numpy().squeeze()
-        bboxs_preds = decode_bboxs(bboxs_preds.cpu().numpy(), img_sz)
-        clas_gts = clas_gts.cpu().numpy()
-        bboxs_gts = decode_bboxs(bboxs_gts.cpu().numpy(), img_sz)
-        
-        # filter out trivial ground truth
-        
-        
-        # filter out preds below detection threshold
-        preds_idxs = np.argwhere(clas_preds >= detection_thre).squeeze()
-        clas_preds = clas_preds[preds_idxs]
-        bbox_preds = bbox_preds[preds_idxs]
-        
-        # sort preds by descending confidence
-        sort_idxs = np.argsort(-clas_preds)
-        clas_preds = clas_preds[sort_idxs]
-        bbox_preds = bbox_preds[sort_idxs]
-        
-        # restore predicted bbox [x, y, w, h]
-        
-        
-        met = calculate_image_precision(gts, preds, thresholds, form)
-        b_mets.append(met)
-        
-    return sum(b_mets) / len(b_mets)
-
-
 @jit(nopython=True)
 def calculate_iou(gt: List[Union[int, float]], 
                   pr: List[Union[int, float]], 

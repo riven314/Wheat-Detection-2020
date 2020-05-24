@@ -126,7 +126,7 @@ def nms(boxes, scores, thresh = 0.3):
     return LongTensor(to_keep)
 
 
-def process_output(output, i, detect_thresh = 0.5):
+def process_output(output, i, ratios, scales, detect_thresh = 0.5):
     """ 
     Process `output[i]` and return the predicted bboxes above `detect_thresh`.
     
