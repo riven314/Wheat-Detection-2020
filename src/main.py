@@ -24,13 +24,13 @@ RAND_SEED = 144
 
 BS = 32
 INIT_LR = 1e-4
-INIT_EPOCH = 10
+INIT_EPOCH = 20
 
-IS_FT = False
+IS_FT = True
 FT_LR = slice(1e-6, 5e-4)
 FT_EPOCH = 20
 
-RATIOS = [1/3, 1, 3.]
+RATIOS = [0.5, 1, 2.]
 #SCALES = [1, 2**(-1/3), 2**(-2/3)]
 SCALES = [1., 0.6, 0.3]
 
