@@ -18,11 +18,12 @@ from src.metrics.mAP import mAP
 
 DATA_PATH = Path('/userhome/34/h3509807/wheat-data')
 SAVE_DIR = Path('models')
-RESIZE_SZ = 256
+SUFFIX_NAME = 'final_retinanet_512'
+RESIZE_SZ = 512
 TEST_MODE = False
 RAND_SEED = 144
 
-BS = 32
+BS = 16
 INIT_LR = 1e-4
 INIT_EPOCH = 20
 
@@ -65,8 +66,8 @@ if IS_FT:
     learn.fit_one_cycle(FT_EPOCH, FT_LR)
 
 
-model_path = SAVE_DIR / 'final_retinanet_model.pth'
-learn.save('final_retinanet_learner')
+model_path = SAVE_DIR / f'{SUFFIX_NAME}_model.pth'
+learn.save(f'{SUFFIX_NAME}_learner')
 torch.save(learn.model.state_dict(), model_path)
 print('final checkpoints saved')
 
