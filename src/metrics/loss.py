@@ -9,8 +9,8 @@ from fastai2.basics import ifnone
 from src.metrics.utils import *
 
 
-def get_retinanet_loss(ratios = None, scales = None):
-    crit = RetinaNetFocalLoss(scales = scales, ratios = ratios)
+def get_retinanet_loss(gamma = 2., alpha = 0.25, ratios = None, scales = None):
+    crit = RetinaNetFocalLoss(gamma, alpha, scales = scales, ratios = ratios)
     return crit
                        
 

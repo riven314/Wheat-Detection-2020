@@ -5,6 +5,8 @@ import numpy as np
 import torch
 from torch import nn, LongTensor, FloatTensor
 
+from fastai2.vision.all import range_of
+
 
 def decode_bboxs(enc_bboxs, img_size):
     """ 
@@ -143,6 +145,8 @@ def process_output(output, i, ratios, scales, detect_thresh = 0.5):
     detect_mask = clas_pred.max(1)[0] > detect_thresh
     bbox_pred, clas_pred = bbox_pred[detect_mask], clas_pred[detect_mask]
     # still expressed in cthw 
-    bbox_pred = tlbr2cthw(torch.clamp(cthw2tlbr(bbox_pred), min=-1, max=1))    
+    bbox_pred = tlbr2cthw(torch.clamp(cthw2tlbr(bbox_pred), min=-1, max=1)) 
+    if len(bbox_pred) == 0:
+        return None, None, None
     scores, preds = clas_pred.max(1)
     return bbox_pred, scores, preds

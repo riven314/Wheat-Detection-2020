@@ -42,6 +42,8 @@ class mAP:
         cthw_bboxs_pred, scores, clas_pred = process_output(preds, i, 
                                                             ratios = self.ratios, scales = self.scales,
                                                             detect_thresh = self.detect_threshold)
+        if scores is None:
+            return []
         keep_idxs = nms(cthw_bboxs_pred, scores, self.nms_threshold)
         cthw_bboxs_pred, scores, clas_pred = cthw_bboxs_pred[keep_idxs], scores[keep_idxs], clas_pred[keep_idxs]
         tlbr_bboxs_pred = cthw2tlbr(cthw_bboxs_pred)
@@ -80,9 +82,13 @@ class mAP:
             bboxs_pred = self.clean_bboxs_pred(preds, bi)
             bboxs_gt, clas_gt = bboxs_gts[bi], clas_gts[bi]
             bboxs_gt = self.clean_bboxs_gt(bboxs_gt, clas_gt)
-            mAP = calculate_image_precision(bboxs_gt, bboxs_pred, 
-                                            thresholds = self.thresholds,
-                                            form = 'pascal_voc')
+            
+            if len(bboxs_gt) == 0 or len(bboxs_pred) == 0:
+                mAP = 1. if len(bboxs_gt) == len(bboxs_pred) else 0.
+            else:
+                mAP = calculate_image_precision(bboxs_gt, bboxs_pred, 
+                                                thresholds = self.iou_thresholds,
+                                                form = 'pascal_voc')
             mAPs.append(mAP)
         metrics = sum(mAPs) / len(mAPs)
         return metrics

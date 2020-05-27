@@ -13,7 +13,7 @@ from fastai2.vision.all import Learner
 from src.data.dls import build_dataloaders
 from src.model.model import get_retinanet, split_param_groups
 from src.metrics.loss import get_retinanet_loss
-from src.callback.core_cbs import CheckpointCallback
+from src.callback.core_cbs import CheckpointCallback, ConfigCallback
 from src.metrics.mAP import mAP
 from src.config.retinanet import config
 from src.config.utils import update_config
@@ -33,15 +33,16 @@ def train_run(cfg):
                         ratios = cfg.RATIOS, scales = cfg.SCALES,
                         iou_thresholds = None, 
                         detect_threshold = cfg.DETECT_THRESHOLD,
-                        nms_threshold = self.NMS_THRESHOLD)
+                        nms_threshold = cfg.NMS_THRESHOLD)
     save_cb = CheckpointCallback(cfg.PREFIX_NAME, 2)    
+    cfg_cb = ConfigCallback(cfg)
     
-    learn = Learner(dls, model, 
-                    path = './models', 
+    learn = Learner(dls, model, path = Path('./models'), 
                     model_dir = cfg.MODEL_DIR,
                     loss_func = retinanet_loss, 
                     splitter = split_param_groups, 
-                    cbs = [save_cb], metrics = mAP_meter())
+                    cbs = [save_cb, cfg_cb], 
+                    metrics = mAP_meter())
     
     learn.freeze()
     learn.fit_one_cycle(cfg.INIT_EPOCH, cfg.INIT_LR)
@@ -49,8 +50,8 @@ def train_run(cfg):
         learn.dls = get_dls(bs = cfg.BS)
         learn.unfreeze()
         learn.fit_one_cycle(cfg.FT_EPOCH, cfg.FT_LR)
-    return None
+    return learn
 
 
 if __name__ == '__main__':
-    train_run(config)
+    learn = train_run(config)
