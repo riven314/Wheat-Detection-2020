@@ -18,12 +18,12 @@ from src.metrics.mAP import mAP
 
 DATA_PATH = Path('/userhome/34/h3509807/wheat-data')
 SAVE_DIR = Path('models')
-SUFFIX_NAME = 'final_retinanet_512'
-RESIZE_SZ = 512
+SUFFIX_NAME = 'final_retinanet_resnet50'
+RESIZE_SZ = 256
 TEST_MODE = False
 RAND_SEED = 144
 
-BS = 16
+BS = 32
 INIT_LR = 1e-4
 INIT_EPOCH = 20
 
@@ -42,7 +42,7 @@ get_dls = partial(build_dataloaders, data_path = DATA_PATH,
 dls = get_dls(bs = BS)
 
 
-model = get_retinanet()
+model = get_retinanet(arch = 'resnet50')
 retinanet_loss = get_retinanet_loss(ratios = RATIOS, scales = SCALES)
 mAP_meter = partial(mAP, img_size = RESIZE_SZ, 
                     ratios = RATIOS, scales = SCALES,
