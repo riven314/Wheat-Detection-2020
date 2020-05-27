@@ -54,4 +54,22 @@ def train_run(cfg):
 
 
 if __name__ == '__main__':
-    learn = train_run(config)
+#     for bias in [-4., -2., -1., 0.]:
+#         for gamma in [1, 2, 3]:
+#             for alpha in [0.25, 0.5, 0.75]:
+#                 for nms in [0.3, 0.4, 0.5]:
+    for bias in [-4.]:
+        for gamma in [2]:
+            for alpha in [0.5]:
+                for nms in [0.4]:
+                    config.BIAS = bias
+                    config.GAMMA = gamma
+                    config.ALPHA = alpha
+                    config.NMS_THRESHOLD = nms
+                    config.MODEL_DIR = f'bias{bias}_gamma{gamma}_alpha{alpha}_nms{nms}'
+                    print(f'training {config.MODEL_DIR}')
+                    try:
+                        learn = train_run(config)
+                    except:
+                        print(f'error skipped: {config.MODEL_DIR}')
+                        continue

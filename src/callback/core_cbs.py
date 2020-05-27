@@ -37,7 +37,8 @@ class ConfigCallback(Callback):
         json_path = str(self.save_dir / 'config.json')
         self.config.DATA_PATH = str(self.config.DATA_PATH)
         self.config.MODEL_DIR = str(self.config.MODEL_DIR)
-        self.config.FT_LR = [self.config.FT_LR.start, self.config.FT_LR.stop]
+        if not isinstance(self.config.FT_LR, list):
+            self.config.FT_LR = [self.config.FT_LR.start, self.config.FT_LR.stop]
         with open(json_path, 'w') as f:
             json.dump(self.config, f, indent = 2)
         print(f'config file written: {json_path}')

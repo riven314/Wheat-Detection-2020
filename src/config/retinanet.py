@@ -5,8 +5,8 @@ from stuf import stuf
 config = stuf(    
     # dir spec
     DATA_PATH = Path('/userhome/34/h3509807/wheat-data'),
-    MODEL_DIR = Path('testing_models'),
-    PREFIX_NAME = 'final_testing',
+    MODEL_DIR = Path('trained_models'),
+    PREFIX_NAME = 'final',
     
     # model spec
     ARCH = 'resnet50',
@@ -20,12 +20,12 @@ config = stuf(
     #SCALES = [1, 2**(-1/3), 2**(-2/3)]
     
     # train loop spec
-    TEST_MODE = True,
+    TEST_MODE = False,
     RAND_SEED = 144,
     RESIZE_SZ = 256,
     BS = 32,
-    IS_FT = True,
-    INIT_EPOCH = 4,
+    IS_FT = False,
+    INIT_EPOCH = 8,
     FT_EPOCH = 4,
     INIT_LR = 1e-4,
     FT_LR = slice(1e-6, 5e-4),
