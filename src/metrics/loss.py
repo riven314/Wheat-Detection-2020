@@ -15,7 +15,7 @@ def get_retinanet_loss(ratios = None, scales = None):
                        
 
 class RetinaNetFocalLoss(nn.Module):
-    def __init__(self, gamma:float = 2., alpha:float = 0.25,  pad_idx:int = 0, 
+    def __init__(self, gamma = 2., alpha = 0.25,  pad_idx = 0, 
                  scales = None, ratios = None, reg_loss = F.smooth_l1_loss):
         super().__init__()
         self.gamma, self.alpha = gamma, alpha

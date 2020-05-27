@@ -6,6 +6,8 @@ from src.metrics.mAP_utils import calculate_image_precision
 
 
 class mAP:
+    __name__ = 'mAP'
+    name = 'mAP'
     def __init__(self, img_size, ratios, scales, iou_thresholds = None, 
                  detect_threshold = 0.5, nms_threshold = 0.3):
         """
