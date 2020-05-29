@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -86,6 +87,8 @@ class mAP:
             if len(bboxs_gt) == 0 or len(bboxs_pred) == 0:
                 mAP = 1. if len(bboxs_gt) == len(bboxs_pred) else 0.
             else:
+                if len(bboxs_gt.shape) == 1:
+                    bboxs_gt = np.expand_dims(bboxs_gt, 0)
                 mAP = calculate_image_precision(bboxs_gt, bboxs_pred, 
                                                 thresholds = self.iou_thresholds,
                                                 form = 'pascal_voc')

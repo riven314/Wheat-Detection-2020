@@ -50,26 +50,20 @@ def train_run(cfg):
         learn.dls = get_dls(bs = cfg.BS)
         learn.unfreeze()
         learn.fit_one_cycle(cfg.FT_EPOCH, cfg.FT_LR)
-    return learn
+    return None
 
 
 if __name__ == '__main__':
-#     for bias in [-4., -2., -1., 0.]:
-#         for gamma in [1, 2, 3]:
-#             for alpha in [0.25, 0.5, 0.75]:
-#                 for nms in [0.3, 0.4, 0.5]:
-    for bias in [-4.]:
-        for gamma in [2]:
-            for alpha in [0.5]:
-                for nms in [0.4]:
-                    config.BIAS = bias
-                    config.GAMMA = gamma
-                    config.ALPHA = alpha
-                    config.NMS_THRESHOLD = nms
-                    config.MODEL_DIR = f'bias{bias}_gamma{gamma}_alpha{alpha}_nms{nms}'
-                    print(f'training {config.MODEL_DIR}')
-                    try:
-                        learn = train_run(config)
-                    except:
-                        print(f'error skipped: {config.MODEL_DIR}')
-                        continue
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--MODEL_DIR', type = str, required = True, help = 'dir name for save models')
+    parser.add_argument('--INIT_EPOCH', type = int, required = True)
+    parser.add_argument('--IS_FT', action = 'store_true')
+    parser.add_argument('--FT_EPOCH', type = int, required = True)
+    parser.add_argument('--ALPHA', type = float, default = 0.5, required = True)
+    parser.add_argument('--GAMMA', type = int, default = 1, required = True)
+    parser.add_argument('--NMS_THRESHOLD', type = float, default = 0.3, required = True)
+    parser.add_argument('--BIAS', type = float, default = -2., required = True)
+    args = parser.parse_args()
+    
+    config = update_config(config, args)
+    train_run(config)

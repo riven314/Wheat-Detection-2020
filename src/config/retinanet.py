@@ -25,9 +25,9 @@ config = stuf(
     RESIZE_SZ = 256,
     BS = 32,
     IS_FT = False,
-    INIT_EPOCH = 8,
+    INIT_EPOCH = 10,
     FT_EPOCH = 4,
     INIT_LR = 1e-4,
-    FT_LR = slice(1e-6, 5e-4),
+    FT_LR = slice(1e-6, 5e-4)
 
 )

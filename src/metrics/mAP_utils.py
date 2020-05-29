@@ -121,7 +121,7 @@ def np_delete_workaround(arr: np.ndarray, idx: int):
 def calculate_precision(gts: List[List[Union[int, float]]],
                         preds: List[List[Union[int, float]]],
                         threshold: float = 0.5,
-                        form: str = 'coco') -> float:
+                        form: str = 'pascal_voc') -> float:
     """Calculates precision for GT - prediction pairs at one threshold.
 
     Args:
