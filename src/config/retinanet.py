@@ -9,7 +9,7 @@ config = stuf(
     PREFIX_NAME = 'final',
     
     # model spec
-    ARCH = 'resnet50',
+    ARCH = 'resnet50-coco',
     BIAS = -2,
     GAMMA = 2.,
     ALPHA = 0.25,

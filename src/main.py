@@ -40,6 +40,7 @@ def train_run(cfg):
     learn = Learner(dls, model, path = Path('./models'), 
                     model_dir = cfg.MODEL_DIR,
                     loss_func = retinanet_loss, 
+                    train_bn = True,
                     splitter = split_param_groups, 
                     cbs = [save_cb, cfg_cb], 
                     metrics = mAP_meter())
@@ -56,6 +57,7 @@ def train_run(cfg):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--MODEL_DIR', type = str, required = True, help = 'dir name for save models')
+    parser.add_argument('--ARCH', type = str, required = True, help = 'resnet50-coco/ resnet34-imagenet/ resnet50-imagenet')
     parser.add_argument('--INIT_EPOCH', type = int, required = True)
     parser.add_argument('--IS_FT', action = 'store_true')
     parser.add_argument('--FT_EPOCH', type = int)
