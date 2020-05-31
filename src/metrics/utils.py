@@ -18,7 +18,7 @@ def decode_bboxs(enc_bboxs, img_size):
 def activ_to_bbox(acts, anchors, flatten = True):
     "Extrapolate bounding boxes on anchors from the model activations."
     if flatten:
-        #acts.mul_(acts.new_tensor([[0.1, 0.1, 0.2, 0.2]])) #Can't remember where those scales come from, but they help regularize
+        acts.mul_(acts.new_tensor([[0.1, 0.1, 0.2, 0.2]])) #Can't remember where those scales come from, but they help regularize
         centers = anchors[...,2:] * acts[...,:2] + anchors[...,:2]
         sizes = anchors[...,2:] * torch.exp(acts[...,:2])
         return torch.cat([centers, sizes], -1)
@@ -31,8 +31,8 @@ def bbox_to_activ(bboxes, anchors, flatten = True):
     if flatten:
         t_centers = (bboxes[...,:2] - anchors[...,:2]) / anchors[...,2:] 
         t_sizes = torch.log(bboxes[...,2:] / anchors[...,2:] + 1e-8) 
-        #return torch.cat([t_centers, t_sizes], -1).div_(bboxes.new_tensor([[0.1, 0.1, 0.2, 0.2]]))
-        return torch.cat([t_centers, t_sizes], -1)
+        return torch.cat([t_centers, t_sizes], -1).div_(bboxes.new_tensor([[0.1, 0.1, 0.2, 0.2]]))
+        #return torch.cat([t_centers, t_sizes], -1)
     else: return [activ_to_bbox(act,anc) for act,anc in zip(acts, anchors)]
     return res
 

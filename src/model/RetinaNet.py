@@ -67,6 +67,7 @@ class RetinaNet(nn.Module):
     
     def forward(self, x):
         c5 = self.encoder(x)
+        
         p_states = [self.c5top5(c5.clone()), self.c5top6(c5)]
         p_states.append(self.p6top7(p_states[-1]))
         for merge in self.merges: p_states = [merge(p_states[0])] + p_states
