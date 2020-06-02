@@ -16,7 +16,7 @@ config = stuf(
     DETECT_THRESHOLD = 0.5,
     NMS_THRESHOLD = 0.3,
     RATIOS = [0.5, 1, 2.],
-    SCALES = [1., 0.6, 0.3],
+    SCALES = [1., 2**(1/3), 2**(2/3)],
     #SCALES = [1, 2**(-1/3), 2**(-2/3)]
     
     # train loop spec
