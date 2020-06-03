@@ -1,19 +1,41 @@
-import random
+import os
+from random import random
 
 import torch
 import numpy as np
 from torch.utils.data import Dataset
 
 from src.common.utils import read_image, xywh2ltrb
+from src.data.tfms import get_transforms
+
+
+def get_datasets(resize_sz, boxes_df, kfolds_df, train_dir, 
+                 fold_idx = 0, is_cutmix = False, is_cutoff = False):
+    """
+    :param: 
+        fold_idx : fold index for validation set
+        is_cutmix : bool, whether enable cutmix in Dataset
+        is_cutoff : bool, whether enable small cutoff in transforms
+    """
+    train_ids = kfolds_df[kfolds_df.fold != valid_fold].index.values
+    valid_ids = kfolds_df[kfolds_df.fold == valid_fold].index.values
+    
+    train_tfms = get_transforms(resize_sz, is_train = True, is_cutoff = is_cutoff)
+    valid_tfms = get_transforms(resize_sz, is_train = False, is_cutoff = False)
+    
+    train_ds = DatasetRetriever(train_ids, boxes_df, train_dir, 
+                                train_tfms, is_cutmix = is_cutmix)
+    valid_ds = DatasetRetriever(valid_ids, boxes_df, train_dir, 
+                                valid_tfms, is_cutmix = False)
+    return train_ds, valid_df
 
 
 class DatasetRetriever(Dataset):
-
-    def __init__(self, marking, image_ids, train_dir, transforms = None, test = False):
+    def __init__(self, image_ids, boxes_df, train_dir, transforms = None, is_cutmix = False):
         super().__init__()
 
         self.image_ids = image_ids
-        self.marking = marking
+        self.boxes_df = boxes_df
         self.transforms = transforms
         self.test = test
         self.train_dir = train_dir
@@ -21,10 +43,11 @@ class DatasetRetriever(Dataset):
     def __getitem__(self, index: int):
         image_id = self.image_ids[index]
         
-        if self.test or random.random() > 0.5:
-            image, boxes = self.load_image_and_boxes(index)
+        # cutmix disabled in test mode 
+        if is_cutmix:
+            image, boxes = self.load_image_and_boxes(index) if random() > 0.5 else self.load_cutmix_image_and_boxes(index)
         else:
-            image, boxes = self.load_cutmix_image_and_boxes(index)
+            image, boxes = self.load_image_and_boxes(index)
 
         # only one class
         labels = torch.ones((boxes.shape[0],), dtype=torch.int64)
@@ -56,7 +79,7 @@ class DatasetRetriever(Dataset):
     def load_image_and_boxes(self, index):
         image_id = self.image_ids[index]
         image = read_image(image_id, self.train_dir)
-        records = self.marking[self.marking['image_id'] == image_id]
+        records = self.boxes_df[self.boxes_df['image_id'] == image_id]
         boxes = records[['x', 'y', 'w', 'h']].values
         boxes = xywh2ltrb(boxes)
         return image, boxes

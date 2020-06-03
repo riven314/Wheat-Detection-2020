@@ -3,7 +3,7 @@ import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 
 
-def get_train_transforms(resize_sz, is_train, is_cutoff = False):
+def get_transforms(resize_sz, is_train, is_cutoff = False):
     """ is_cutoff is used only when is_train = True """
     bbox_params = A.BboxParams(
             format = 'pascal_voc',

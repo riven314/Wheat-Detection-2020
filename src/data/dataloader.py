@@ -2,7 +2,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SequentialSampler, RandomSampler
 
 
-def get_dls(bs, workers_n = 4):
+def get_dataloaders(bs, workers_n = 4):
     train_ds = None
     valid_ds = None
     
