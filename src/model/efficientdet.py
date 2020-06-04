@@ -1,3 +1,7 @@
+import os
+
+import torch
+
 from effdet import get_efficientdet_config, EfficientDet, DetBenchTrain
 from effdet.efficientdet import HeadNet
 
@@ -14,6 +18,7 @@ def get_efficientdet(resize_sz, backbone_ckpt):
     
     net = EfficientDet(config, pretrained_backbone = False)
     net.load_state_dict(torch.load(backbone_ckpt))
+    print(f'backbone loaded: {backbone_ckpt}')
         
     config.num_classes = 1
     config.image_size = resize_sz

@@ -18,7 +18,7 @@ def read_boxes_df(csv_path):
     return boxes_df
 
 
-def get_kfolds_df(boxes_df, k = 5):
+def get_kfolds_df(boxes_df, kfolds = 5):
     """
     stratified by # boxes and data source of an image
     stratified means for every fold, stratify_group's distribution is the same
@@ -29,7 +29,7 @@ def get_kfolds_df(boxes_df, k = 5):
     :return:
         kfolds_df : DataFrame, one row = one image
     """
-    skf = StratifiedKFold(n_splits = k, shuffle = True, random_state = 42)
+    skf = StratifiedKFold(n_splits = kfolds, shuffle = True, random_state = 42)
 
     kfolds_df = boxes_df[['image_id']].copy()
     kfolds_df.loc[:, 'boxes_count'] = 1

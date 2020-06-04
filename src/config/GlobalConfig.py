@@ -6,7 +6,7 @@ class GlobalConfig:
     n_epochs = 1 # n_epochs = 40
     lr = 0.0002
 
-    folder = 'effdet5-cutmix-augmix'
+    folder = 'models/effdet5-test'
 
     # -------------------
     verbose = True
@@ -29,13 +29,13 @@ class GlobalConfig:
     
     SchedulerClass = torch.optim.lr_scheduler.ReduceLROnPlateau
     scheduler_params = dict(
-        mode='min',
-        factor=0.5,
-        patience=1,
-        verbose=False, 
-        threshold=0.0001,
-        threshold_mode='abs',
-        cooldown=0, 
-        min_lr=1e-8,
-        eps=1e-08
+        mode = 'min',
+        factor = 0.5,
+        patience = 1,
+        verbose = False, 
+        threshold = 0.0001,
+        threshold_mode = 'abs',
+        cooldown = 0, 
+        min_lr = 1e-8,
+        eps = 1e-08
     )

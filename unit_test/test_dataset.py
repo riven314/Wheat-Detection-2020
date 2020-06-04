@@ -9,7 +9,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from src.data.dataset import get_datasets
+from src.data.datasets import get_datasets
 from src.data.df_utils import read_boxes_df, get_kfolds_df
 
 
