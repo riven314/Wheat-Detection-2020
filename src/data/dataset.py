@@ -65,13 +65,16 @@ class DatasetRetriever(Dataset):
                     'bboxes': target['boxes'],
                     'labels': labels
                 })
+
                 if len(sample['bboxes']) > 0:
                     image = sample['image']
                     target['boxes'] = torch.stack(tuple(map(torch.tensor, zip(*sample['bboxes'])))).permute(1, 0)
                     #yxyx: be warning
                     target['boxes'][:,[0,1,2,3]] = target['boxes'][:,[1,0,3,2]]  
+                    target['labels'] = torch.stack(sample['labels'])
                     break
-
+                    
+        assert target['boxes'].shape[0] ==target['labels'].shape[0], 'boxes len != labels len'
         return image, target, image_id
 
     def __len__(self) -> int:
