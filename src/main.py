@@ -11,8 +11,8 @@ from src.learner.Learner import Learner
 
 backbone_ckpt = '/userhome/34/h3509807/.cache/torch/checkpoints/tf_efficientdet_d5-ef44aea8.pth'
 csv_path = '/userhome/34/h3509807/wheat-data/train.csv'
-resize_sz = 256
-bs = 8
+resize_sz = GlobalConfig.resize_sz
+bs = GlobalConfig.batch_size
 kfolds = 5
 fold_idx = 0
 is_cutmix = False

@@ -1,7 +1,13 @@
 import os
+import sys
+
+# src: https://www.kaggle.com/shonenkov/timm-efficientdet-pytorch?select=effdet
+path = '/userhome/34/h3509807/effdet_module'
+sys.path.insert(0, path)
 
 import torch
 
+import effdet
 from effdet import get_efficientdet_config, EfficientDet, DetBenchTrain
 from effdet.efficientdet import HeadNet
 

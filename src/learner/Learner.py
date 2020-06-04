@@ -59,7 +59,7 @@ class Learner:
                 #for path in sorted(glob(f'{self.base_dir}/best-checkpoint-*epoch.bin'))[:-3]:
                 #    os.remove(path)
 
-            if self.config.validate_scheduler:
+            if self.config.validation_scheduler:
                 self.scheduler.step(metrics = summary_loss.avg)
             self.epoch += 1
 
@@ -82,8 +82,12 @@ class Learner:
                 images = images.to(self.device).float()
                 boxes = [target['boxes'].to(self.device).float() for target in targets]
                 labels = [target['labels'].to(self.device).float() for target in targets]
-
-                loss, _, _ = self.model(images, {'bbox': boxes, 'cls': labels})
+                
+                #img_size = torch.as_tensor([self.config.resize_sz, self.config.resize_sz]).float()
+                #target = {'bbox': boxes, 'cls': labels, 
+                #          'img_scale': torch.as_tensor([1.]), 'img_size': img_size}
+                loss, _, _ = self.model(images, boxes, labels)
+                #loss = loss_dict['loss']
                 summary_loss.update(loss.detach().item(), batch_size)
 
         return summary_loss
@@ -110,7 +114,12 @@ class Learner:
 
             self.optimizer.zero_grad()
             
-            loss, _, _ = self.model(images, {'bbox': boxes, 'cls': labels})
+            #img_size = torch.as_tensor([self.config.resize_sz, self.config.resize_sz]).float()
+            #target = {'bbox': boxes, 'cls': labels, 
+            #          'img_scale': torch.as_tensor([1.]), 'img_size': img_size}
+            loss, _, _ = self.model(images, boxes, labels)
+            # loss/ class_loss/ box_loss
+            #loss = loss_dict['loss']
             
             loss.backward()
 

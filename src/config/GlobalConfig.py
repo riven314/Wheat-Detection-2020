@@ -1,9 +1,11 @@
 import torch
 
 class GlobalConfig:
+    resize_sz = 256
+    
     num_workers = 4
-    batch_size = 4 
-    n_epochs = 1 # n_epochs = 40
+    batch_size = 16
+    n_epochs = 40 # n_epochs = 40
     lr = 0.0002
 
     folder = 'models/effdet5-test'
