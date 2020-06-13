@@ -8,7 +8,7 @@ from src.metrics.AverageMeter import AverageMeter
 
 
 class Learner:
-    def __init__(self, model, device, config):
+    def __init__(self, model, config):
         self.config = config
         self.epoch = 0
 
@@ -19,7 +19,7 @@ class Learner:
         self.log_path = f'{self.base_dir}/log.txt'
         self.best_summary_loss = 10**5
         
-        self.device = device
+        self.device = config.device
         self.model = model.to(self.device)
 
         param_optimizer = list(self.model.named_parameters())

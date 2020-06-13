@@ -1,6 +1,8 @@
 import torch
 
 class GlobalConfig:
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
     resize_sz = 512
     
     num_workers = 4

@@ -19,11 +19,10 @@ is_cutmix = False
 is_cutoff = True
 
 
-device = get_device()
 train_dl, valid_dl = get_dataloaders(resize_sz, csv_path, bs, 
                                      kfolds = kfolds, fold_idx = fold_idx,
                                      is_cutmix = is_cutmix, is_cutoff = is_cutoff)
 model = get_efficientdet(resize_sz, backbone_ckpt)
 
-learner = Learner(model, device, GlobalConfig)
+learner = Learner(model, GlobalConfig)
 learner.fit(train_dl, valid_dl)
